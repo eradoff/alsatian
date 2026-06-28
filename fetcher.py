@@ -20,17 +20,17 @@ NEWS_API_URL = "https://newsapi.org/v2/everything"
 # NHTSA public RSS feeds — no API key needed
 NHTSA_API_URL = "https://api.nhtsa.gov/recalls/recallsByVehicle"
 
-NTSB_RSS = "https://www.ntsb.gov/Pages/RSS.aspx"
+NTSB_RSS = "https://www.ntsb.gov/_layouts/15/feed.aspx?xsl=1&web=%2F&page=674e62a9-4f3b-4058-846b-150bc1c21aa0&wp=4d4ae30f-92c9-4e6c-9c58-6bac99822531&pageurl=%2FPages%2FRSS%2DFeed%2DPage%2Easpx"
 
 RECALL_MAKES = [
-    ("Ford", "F-150"),
-    ("Toyota", "Camry"),
-    ("Tesla", "Model 3"),
-    ("Chevrolet", "Silverado"),
-    ("Honda", "Civic"),
+    ("FORD", "F-150"),
+    ("TOYOTA", "CAMRY"),
+    ("TESLA", "MODEL 3"),
+    ("CHEVROLET", "SILVERADO"),
+    ("HONDA", "CIVIC"),
     ("BMW", "3 Series"),
-    ("Mercedes-Benz", "C-Class"),
-    ("Volkswagen", "Jetta"),
+    ("MERCEDES-BENZ", "C-CLASS"),
+    ("VOLKSWAGEN", "JETTA"),
 ]
 # Keywords relevant to Alsatian's program
 # Grouped by category for relevance scoring later
@@ -115,15 +115,17 @@ def fetch_nhtsa_recalls():
                 continue
             results = response.json().get("results", [])
             for r in results[:3]:
-                title = r.get("Subject", "")
-                if not title or title in seen:
+                campaign = r.get("NHTSACampaignNumber", "")
+                component = r.get("Component", "")
+                key = f"{make}_{model}_{campaign}_{component}"
+                if not (campaign or component) or key in seen:
                     continue
-                seen.add(title)
+                seen.add(key)
                 items.append({
                     "source": "NHTSA",
                     "feed_name": "NHTSA Recalls",
-                    "title": f"Recall: {make} {model} — {title}",
-                    "description": r.get("Consequence", ""),
+                    "title": f"Recall: {make} {model} — {component}",
+                    "description": r.get("Summary", "") + " " + r.get("Consequence", ""),
                     "url": f"https://www.nhtsa.gov/vehicle/{make}",
                     "published_at": r.get("ReportReceivedDate", ""),
                     "source_name": "NHTSA",
