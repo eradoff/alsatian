@@ -12,11 +12,12 @@ Scheduler:
 
 import os
 import json
+from sheets_writer import append_items
 from datetime import datetime
 from flask import Flask, render_template_string, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
-
+from database import insert_article, filter_unsheeted, mark_sheeted
 from fetcher import fetch_all
 from scorer import score_all
 from emailer import send_digest, build_html_email
@@ -52,13 +53,25 @@ def run_pipeline():
 
         # Step 2: Score and filter with Claude
         print("\nStep 2: Scoring with Claude...")
-        scored_items = score_all(raw_items, min_score=5)
+        scored_items = score_all(raw_items, min_score=0)
 
-        # Step 3: Send email digest
-        print("\nStep 3: Sending email digest...")
+        # Step 3: Store articles in database (dedupes by URL on insert)
+        print("\nStep 3: Storing articles in database...")
+        for item in scored_items:
+            insert_article(item)
+
+        # Step 4: Send email digest
+        print("\nStep 4: Sending email digest...")
         email_sent = send_digest(scored_items)
 
-        # Step 4: Store results for web display
+        # Step 5: Append new-to-sheet items to Google Sheet
+        print("\nStep 5: Appending to Google Sheet...")
+        new_to_sheet = filter_unsheeted(scored_items)
+        if append_items(new_to_sheet):
+            for item in new_to_sheet:
+                mark_sheeted(item.get("url", ""))
+
+        # Step 6: Store results for web display
         latest_results = {
             "items": scored_items,
             "last_run": datetime.now().strftime("%B %d, %Y at %H:%M UTC"),

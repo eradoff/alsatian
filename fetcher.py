@@ -11,6 +11,7 @@ import requests
 import feedparser
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from database import init_db
 
 load_dotenv()
 
@@ -126,8 +127,9 @@ def fetch_nhtsa_recalls():
                     "feed_name": "NHTSA Recalls",
                     "title": f"Recall: {make} {model} — {component}",
                     "description": r.get("Summary", "") + " " + r.get("Consequence", ""),
-                    "url": f"https://www.nhtsa.gov/vehicle/{make}",
-                    "published_at": r.get("ReportReceivedDate", ""),
+                  
+                    "url": f"https://www.nhtsa.gov/recalls?nhtsaId={r.get('NHTSACampaignNumber','')}",
+		    "published_at": r.get("ReportReceivedDate", ""),
                     "source_name": "NHTSA",
                 })
         except Exception as e:
@@ -166,6 +168,7 @@ def fetch_all(days_back=1):
     nhtsa_items = fetch_nhtsa_recalls()
     ntsb_items = fetch_ntsb_rss()
     all_items = articles + nhtsa_items + ntsb_items
+    init_db()
     print(f"Total items fetched: {len(all_items)}")
     return all_items
 
