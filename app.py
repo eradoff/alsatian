@@ -53,7 +53,7 @@ def run_pipeline():
 
         # Step 2: Score and filter with Claude
         print("\nStep 2: Scoring with Claude...")
-        scored_items = score_all(raw_items, min_score=0)
+        scored_items = score_all(raw_items, min_score=4)
 
         # Step 3: Store articles in database (dedupes by URL on insert)
         print("\nStep 3: Storing articles in database...")
