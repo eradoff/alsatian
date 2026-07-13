@@ -10,13 +10,18 @@ Scheduler:
   Runs the full pipeline daily at 7:00 AM UTC (adjust to your timezone)
 """
 
+#python library
 import os
 import json
-from sheets_writer import append_items
 from datetime import datetime
+
+#third party
 from flask import Flask, render_template_string, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
+
+#modules
+from sheets_writer import append_items
 from database import insert_article, filter_unsheeted, mark_sheeted
 from fetcher import fetch_all
 from scorer import score_all
