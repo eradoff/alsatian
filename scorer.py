@@ -3,6 +3,7 @@ scorer.py — Uses Claude API to score relevance to Alsatian
 and generate plain-language summaries with "relevance to Alsatian" notes.
 
 This is the AI brain of the agent.
+Refactored (Month 1, Day 2): RelevanceScorer class replaces module-level client.
 """
 
 import os
@@ -12,9 +13,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-# Alsatian's core concerns — used to brief Claude on what matters
+# Alsatian's core concerns — used to brief Claude on what matters.
+# Deliberately left as a module-level constant: static text, no secrets,
+# no per-instance variation needed (yet). SCREAMING_SNAKE_CASE = constant.
 ALSATIAN_CONTEXT = """
 Alsatian is a consumer vehicle safety program with the following specific concerns:
 
@@ -45,23 +46,36 @@ Alsatian is a consumer vehicle safety program with the following specific concer
 """
 
 
-def score_and_summarize(item):
-    """
-    Send an article to Claude for relevance scoring and summarization.
-    Returns the item with added 'score', 'summary', and 'alsatian_note' fields.
-    """
-    title = item.get("title", "")
-    description = item.get("description", "")
-    source = item.get("source_name", "")
+class RelevanceScorer:
+    """Scores news articles for relevance to Alsatian using the Claude API."""
 
-    # Skip if no useful content
-    if not title or title == "No title":
-        item["score"] = 0
-        item["summary"] = ""
-        item["alsatian_note"] = ""
-        return item
+    def __init__(self, api_key=None, model="claude-sonnet-4-6"):
+        # Note the quotes: "ANTHROPIC_API_KEY" is the NAME of the env var,
+        # passed as a string. Without quotes it's a NameError.
+        key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        if not key:
+            raise ValueError("No Anthropic API key provided")  # fail fast
+        self.client = anthropic.Anthropic(api_key=key)
+        self.model = model
 
-    prompt = f"""You are analyzing news articles for relevance to the Alsatian vehicle safety program.
+    def score_and_summarize(self, item):
+        """
+        Send an article to Claude for relevance scoring and summarization.
+        Returns the item with added 'score', 'summary', and 'alsatian_note' fields.
+        """
+        title = item.get("title", "")
+        description = item.get("description", "")
+        source = item.get("source_name", "")
+
+        # Skip if no useful content
+        if not title or title == "No title":
+            item["score"] = 0
+            item["summary"] = ""
+            item["alsatian_note"] = ""
+            item["category"] = "other"
+            return item
+
+        prompt = f"""You are analyzing news articles for relevance to the Alsatian vehicle safety program.
 
 ALSATIAN CONTEXT:
 {ALSATIAN_CONTEXT}
@@ -81,69 +95,77 @@ Please respond with a JSON object containing exactly these fields:
 
 Respond with only the JSON object. No preamble, no explanation, no markdown."""
 
-    try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=400,
-            messages=[{"role": "user", "content": prompt}]
-        )
+        try:
+            response = self.client.messages.create(
+                model=self.model,          # reads the instance's configured model
+                max_tokens=400,
+                messages=[{"role": "user", "content": prompt}]
+            )
 
-        text = response.content[0].text.strip()
+            text = response.content[0].text.strip()
 
-        # Parse JSON response
-        result = json.loads(text)
-        item["score"] = result.get("score", 0)
-        item["summary"] = result.get("summary", "")
-        item["alsatian_note"] = result.get("alsatian_note", "")
-        item["category"] = result.get("category", "other")
+            # Parse JSON response
+            result = json.loads(text)
+            item["score"] = result.get("score", 0)
+            item["summary"] = result.get("summary", "")
+            item["alsatian_note"] = result.get("alsatian_note", "")
+            item["category"] = result.get("category", "other")
 
-    except json.JSONDecodeError as e:
-        print(f"JSON parse error for '{title}': {e}")
-        item["score"] = 0
-        item["summary"] = description[:200] if description else ""
-        item["alsatian_note"] = ""
-        item["category"] = "other"
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error for '{title}': {e}")
+            item["score"] = 0
+            item["summary"] = description[:200] if description else ""
+            item["alsatian_note"] = ""
+            item["category"] = "other"
 
-    except Exception as e:
-        print(f"Claude API error for '{title}': {e}")
-        item["score"] = 0
-        item["summary"] = description[:200] if description else ""
-        item["alsatian_note"] = ""
-        item["category"] = "other"
+        except Exception as e:
+            # NOTE (Day 5 autopsy pending): this catches EVERYTHING, including
+            # our own bugs (NameError, typos), and converts them into fake 0/10
+            # scores. It kept the pipeline alive today, but it lied to us three
+            # times. We will narrow this and add real logging on Day 5.
+            print(f"Claude API error for '{title}': {e}")
+            item["score"] = 0
+            item["summary"] = description[:200] if description else ""
+            item["alsatian_note"] = ""
+            item["category"] = "other"
 
-    return item
+        return item
 
+    def score_all(self, items, min_score=4):
+        """
+        Score all items and return only those above min_score,
+        sorted by score descending.
+        """
+        print(f"Scoring {len(items)} items with Claude...")
+        scored = []
 
-def score_all(items, min_score=4):
-    """
-    Score all items and return only those above min_score,
-    sorted by score descending.
-    """
-    print(f"Scoring {len(items)} items with Claude...")
-    scored = []
+        for i, item in enumerate(items):
+            print(f"  Scoring {i+1}/{len(items)}: {item.get('title', '')[:60]}...")
+            scored_item = self.score_and_summarize(item)   # method call via self
+            if scored_item["score"] >= min_score:
+                scored.append(scored_item)
 
-    for i, item in enumerate(items):
-        print(f"  Scoring {i+1}/{len(items)}: {item.get('title', '')[:60]}...")
-        scored_item = score_and_summarize(item)
-        if scored_item["score"] >= min_score:
-            scored.append(scored_item)
-
-    # Sort by score, highest first
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    print(f"  {len(scored)} items scored {min_score}+ out of {len(items)} total")
-    return scored
+        # Sort by score, highest first
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        print(f"  {len(scored)} items scored {min_score}+ out of {len(items)} total")
+        return scored
 
 
 if __name__ == "__main__":
-    # Test with a dummy article
-    test_item = {
-        "title": "Tesla Model Y T-boned by Police Cruiser at 70 mph, One Dead",
-        "description": "A police cruiser running a red light struck a Tesla Model Y at approximately 70 mph in an intersection. One occupant died, the second remains in critical condition. The Tesla's B-pillar showed significant intrusion.",
-        "source_name": "CNN",
-        "url": "https://example.com/test",
-    }
-    result = score_and_summarize(test_item)
-    print(f"\nScore: {result['score']}/10")
-    print(f"Summary: {result['summary']}")
-    print(f"Alsatian note: {result['alsatian_note']}")
-    print(f"Category: {result['category']}")
+    # Construct the scorer — this is where __init__ finally runs,
+    # the client is created, and a missing key fails fast and loud.
+    scorer = RelevanceScorer()
+    print(f"Scorer ready. Model: {scorer.model}")
+
+    # Optional live test — costs one real API call. Uncomment to run.
+    # test_item = {
+    #     "title": "Tesla Model Y T-boned by Police Cruiser at 70 mph, One Dead",
+    #     "description": "A police cruiser running a red light struck a Tesla Model Y at approximately 70 mph in an intersection. One occupant died, the second remains in critical condition. The Tesla's B-pillar showed significant intrusion.",
+    #     "source_name": "CNN",
+    #     "url": "https://example.com/test",
+    # }
+    # result = scorer.score_and_summarize(test_item)
+    # print(f"\nScore: {result['score']}/10")
+    # print(f"Summary: {result['summary']}")
+    # print(f"Alsatian note: {result['alsatian_note']}")
+    # print(f"Category: {result['category']}")
