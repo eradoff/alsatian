@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 from sheets_writer import append_items
 from database import insert_article, filter_unsheeted, mark_sheeted
 from fetcher import fetch_all
-from scorer import score_all
+from scorer import RelevanceScorer
 from emailer import send_digest, build_html_email
 
 load_dotenv()
@@ -58,7 +58,8 @@ def run_pipeline():
 
         # Step 2: Score and filter with Claude
         print("\nStep 2: Scoring with Claude...")
-        scored_items = score_all(raw_items, min_score=4)
+        scorer = RelevanceScorer()
+        scored_items = scorer.score_all(raw_items, min_score=4)
 
         # Step 3: Store articles in database (dedupes by URL on insert)
         print("\nStep 3: Storing articles in database...")
