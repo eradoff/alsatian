@@ -153,6 +153,7 @@ DIGEST_TEMPLATE = """
     <div class="status-bar">
         <strong>Status:</strong> {{ status }}
         &nbsp;&nbsp;
+        &middot; {{ trigger }}
         <a href="/run" class="run-btn">Run Now</a>
     </div>
 
