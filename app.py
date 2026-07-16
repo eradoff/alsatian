@@ -50,6 +50,7 @@ def run_pipeline():
     print(f"\n{'='*50}")
     print(f"Pipeline started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*50}")
+  
 
     try:
         # Step 1: Fetch from all sources
@@ -82,6 +83,7 @@ def run_pipeline():
             "items": scored_items,
             "last_run": datetime.now().strftime("%B %d, %Y at %H:%M UTC"),
             "status": f"OK — {len(scored_items)} relevant items found, email {'sent' if email_sent else 'failed'}"
+            "trigger": ("manual" if trigger == "manual" else "scheduled")
         }
 
         print(f"\nPipeline complete: {len(scored_items)} items, email {'sent' if email_sent else 'failed'}")
