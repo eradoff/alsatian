@@ -41,7 +41,7 @@ latest_results = {
 }
 
 
-def run_pipeline():
+def run_pipeline(trigger="scheduled"):
     """
     Full pipeline: fetch → score → email → store results.
     Called by scheduler and manual trigger.
@@ -82,7 +82,7 @@ def run_pipeline():
         latest_results = {
             "items": scored_items,
             "last_run": datetime.now().strftime("%B %d, %Y at %H:%M UTC"),
-            "status": f"OK — {len(scored_items)} relevant items found, email {'sent' if email_sent else 'failed'}"
+            "status": f"OK — {len(scored_items)} relevant items found, email {'sent' if email_sent else 'failed'}",
             "trigger": ("manual" if trigger == "manual" else "scheduled")
         }
 
