@@ -231,12 +231,14 @@ def manual_run():
     """Manually trigger the pipeline."""
     run_pipeline()
     return redirect("/")
-    # make into a redirect to the index page
+    
   #  return jsonify({
   #      "status": "ok",
   #      "items_found": len(latest_results["items"]),
   #      "last_run": latest_results["last_run"]
   #  })
+
+  # make into a redirect to the index page
     return redirect("/")
 
 
