@@ -16,7 +16,7 @@ import json
 from datetime import datetime
 
 #third party
-from flask import Flask, render_template_string, jsonify
+from flask import Flask, render_template_string, jsonify, redirect  
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 
@@ -230,11 +230,14 @@ def index():
 def manual_run():
     """Manually trigger the pipeline."""
     run_pipeline()
-    return jsonify({
-        "status": "ok",
-        "items_found": len(latest_results["items"]),
-        "last_run": latest_results["last_run"]
-    })
+    return redirect("/")
+    # make into a redirect to the index page
+  #  return jsonify({
+  #      "status": "ok",
+  #      "items_found": len(latest_results["items"]),
+  #      "last_run": latest_results["last_run"]
+  #  })
+    return redirect("/")
 
 
 @app.route("/health")
