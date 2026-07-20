@@ -36,15 +36,16 @@ RECALL_MAKES = [
 # Keywords relevant to Alsatian's program
 # Grouped by category for relevance scoring later
 SEARCH_QUERIES = [
-    "car crash fatality highway",
+    "car crash fatality",
     "vehicle side impact crash",
     "A-pillar intrusion crash",
-    "automotive crash test IIHS NHTSA",
+    "automobile crash test",
     "vehicle occupant death injury",
     "car crash mass asymmetry SUV sedan",
     "passive safety innovation automotive",
     "crash test standard 2026",
     "vehicle structural failure crash",
+    "car safety innovations"
     "automotive airbag failure",
 ]
 
