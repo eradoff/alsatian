@@ -221,9 +221,7 @@ CAT_LABELS = {
 def index():
     return render_template_string(
         DIGEST_TEMPLATE,
-        items=latest_results["items"],
-        last_run=latest_results["last_run"],
-        status=latest_results["status"],
+        **latest_results,
         cat_colors=CAT_COLORS,
         cat_labels=CAT_LABELS,
     )
@@ -232,14 +230,11 @@ def index():
 @app.route("/run")
 def manual_run():
     """Manually trigger the pipeline."""
-    run_pipeline()
-    return redirect("/")
+   # run_pipeline()
+   
+    run_pipeline(trigger="manual")
     
-  #  return jsonify({
-  #      "status": "ok",
-  #      "items_found": len(latest_results["items"]),
-  #      "last_run": latest_results["last_run"]
-  #  })
+
 
   # make into a redirect to the index page
     return redirect("/")
