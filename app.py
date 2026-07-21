@@ -14,9 +14,11 @@ Scheduler:
 import os
 import json
 from datetime import datetime
+from functools import wraps
+
 
 #third party
-from flask import Flask, render_template_string, jsonify, redirect  
+from flask import Flask, render_template_string, jsonify, redirect, request, Response  
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 
@@ -40,6 +42,16 @@ latest_results = {
     "status": "No run yet"
 }
 
+def require_auth(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        auth = request.authorization
+        if not auth or auth.username != os.getenv("SITE_USER") \
+           or auth.password != os.getenv("SITE_PASS"):
+            return Response("Auth required", 401,
+                            {"WWW-Authenticate": 'Basic realm="Alsatian"'})
+        return f(*args, **kwargs)
+    return wrapped
 
 def run_pipeline(trigger="scheduled"):
     """
@@ -218,7 +230,9 @@ CAT_LABELS = {
 
 
 @app.route("/")
+@require_auth
 def index():
+   
     return render_template_string(
         DIGEST_TEMPLATE,
         **latest_results,
@@ -228,20 +242,20 @@ def index():
 
 
 @app.route("/run")
+@require_auth
 def manual_run():
+    
     """Manually trigger the pipeline."""
-   # run_pipeline()
-   
+      
     run_pipeline(trigger="manual")
     
-
-
-  # make into a redirect to the index page
     return redirect("/")
 
 
 @app.route("/health")
+@require_auth
 def health():
+    
     """Health check for AWS load balancer / monitoring."""
     return jsonify({
         "status": "healthy",
