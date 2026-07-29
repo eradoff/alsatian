@@ -45,7 +45,7 @@ SEARCH_QUERIES = [
     "passive safety innovation automotive",
     "crash test standard 2026",
     "vehicle structural failure crash",
-    "car safety innovations"
+    "car safety innovations",
     "automotive airbag failure",
 ]
 
