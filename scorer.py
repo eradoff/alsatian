@@ -140,11 +140,15 @@ Respond with only the JSON object. No preamble, no explanation, no markdown."""
         scored = []
 
         for i, item in enumerate(items):
+            if item.get("score") is not None:
+                print(f"  Pre-scored: {item.get('title', '')[:60]}... score={item['score']}")
+                if item["score"] >= min_score:
+                    scored.append(item)
+                continue
             print(f"  Scoring {i+1}/{len(items)}: {item.get('title', '')[:60]}...")
-            scored_item = self.score_and_summarize(item)   # method call via self
+            scored_item = self.score_and_summarize(item)
             if scored_item["score"] >= min_score:
                 scored.append(scored_item)
-
         # Sort by score, highest first
         scored.sort(key=lambda x: x["score"], reverse=True)
         print(f"  {len(scored)} items scored {min_score}+ out of {len(items)} total")
