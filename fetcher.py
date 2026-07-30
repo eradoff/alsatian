@@ -12,6 +12,7 @@ import feedparser
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from database import init_db
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ NEWS_API_URL = "https://newsapi.org/v2/everything"
 
 # NHTSA public RSS feeds — no API key needed
 NHTSA_API_URL = "https://api.nhtsa.gov/recalls/recallsByVehicle"
+IIHS_FEED = "http://feeds.feedburner.com/iihs"
 
 NTSB_RSS = "https://www.ntsb.gov/_layouts/15/feed.aspx?xsl=1&web=%2F&page=674e62a9-4f3b-4058-846b-150bc1c21aa0&wp=4d4ae30f-92c9-4e6c-9c58-6bac99822531&pageurl=%2FPages%2FRSS%2DFeed%2DPage%2Easpx"
 
@@ -48,6 +50,41 @@ SEARCH_QUERIES = [
     "car safety innovations",
     "automotive airbag failure",
 ]
+
+
+def fetch_iihs_news():
+    items = []
+    seen = set()
+    r = requests.get(IIHS_FEED, timeout=10, allow_redirects=True)
+    print(f"DEBUG: IIHS_FEED={IIHS_FEED}")
+    print(f"DEBUG: r.status={r.status_code} len={len(r.text)}")
+    feed = feedparser.parse(r.text)
+    print(f"IIHS: {len(feed.entries)} entries found")
+    for entry in feed.entries:
+        try:
+            url = entry.link
+            if url in seen:
+                continue
+            seen.add(url)
+            title = entry.title
+            desc_soup = BeautifulSoup(entry.description, "html.parser")
+            span = desc_soup.find("span", class_="xhtml-content")
+            description = span.get_text(strip=True) if span else ""
+            pub_date = entry.get("published", "")
+            items.append({
+                "title": title,
+                "url": url,
+                "description": description,
+                "published_date": pub_date,
+                "source": "IIHS",
+             #   "score" : 7,
+              #  "alsatian_note": "IIHS safety research",
+            })
+        except Exception as e:
+            print(f"IIHS parse error: {e}")
+            continue
+    print(f"IIHS: {len(items)} items fetched")
+    return items
 
 
 def fetch_news_articles(days_back=1):
@@ -101,6 +138,7 @@ def fetch_news_articles(days_back=1):
 
     print(f"Fetched {len(articles)} unique articles from NewsAPI")
     return articles
+
 
 
 def fetch_nhtsa_recalls():
@@ -168,7 +206,9 @@ def fetch_all(days_back=1):
     articles = fetch_news_articles(days_back=days_back)
     nhtsa_items = fetch_nhtsa_recalls()
     ntsb_items = fetch_ntsb_rss()
-    all_items = articles + nhtsa_items + ntsb_items
+    iihs_items = fetch_iihs_news()
+    all_items = articles + nhtsa_items + ntsb_items + iihs_items
+    
     init_db()
     print(f"Total items fetched: {len(all_items)}")
     return all_items
