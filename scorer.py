@@ -36,7 +36,9 @@ Alsatian is a consumer vehicle safety program with the following specific concer
    deceleration trauma, force-deflection curves, plateau-shaped crush profiles.
 
 6. REGULATORY LANDSCAPE — FMVSS standards, IIHS test protocols, NHTSA investigations,
-   low-volume manufacturer exemptions, NSF SBIR grant process.
+   low-volume manufacturer exemptions, NSF SBIR grant process.  NOTE: Articles published by IIHS or HLDI are directly relevant to Alsatian — score 
+   minimum 5. The alsatian_note must be specific to THIS article's actual findings, not 
+   a generic label. Explain precisely why this specific research matters for Alsatian.
 
 7. COMPETITOR/INDUSTRY BEHAVIOR — How OEMs respond to (or fail) safety tests,
    new safety technologies, patent filings in safety space.
@@ -84,6 +86,9 @@ ARTICLE TO ANALYZE:
 Title: {title}
 Source: {source}
 Description: {description}
+
+IMPORTANT: The alsatian_note must reference specific details from THIS article — statistics, vehicle names, death rates, findings. Generic phrases like "IIHS safety research" or "directly relevant" alone are not acceptable. Name the specific finding and explain precisely how it connects to Alsatian's design goals.
+
 
 Please respond with a JSON object containing exactly these fields:
 {{

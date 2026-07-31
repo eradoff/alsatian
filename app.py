@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 #modules
 from sheets_writer import append_items
 from database import insert_article, filter_unsheeted, mark_sheeted
-from fetcher2 import fetch_all
+from fetcher import fetch_all
 from scorer import RelevanceScorer
 from emailer import send_digest, build_html_email
 
