@@ -9,6 +9,8 @@ Refactored (Month 1, Day 2): RelevanceScorer class replaces module-level client.
 import os
 import json
 import anthropic
+import requests
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,6 +62,27 @@ class RelevanceScorer:
         self.client = anthropic.Anthropic(api_key=key)
         self.model = model
 
+        # contact server 2 for RAG
+    
+    RAG_SERVER = os.getenv("RAG_SERVER_URL", "")
+
+    def get_rag_context(self,title, description):
+        if not self.RAG_SERVER:
+            return []
+        try:
+            response = requests.post(
+                f"{self.RAG_SERVER}/query",
+                json={"text": f"{title} {description}"},
+                timeout=3
+            )    
+            if response.status_code == 200:
+                return response.json().get("chunks", [])
+       
+        except Exception:
+            pass
+            return []
+
+
     def score_and_summarize(self, item):
         """
         Send an article to Claude for relevance scoring and summarization.
@@ -76,12 +99,23 @@ class RelevanceScorer:
             item["alsatian_note"] = ""
             item["category"] = "other"
             return item
+        rag_chunks = self.get_rag_context(
+            item.get("title", ""),
+            item.get("description", "")
+        )     
+
+        rag_section = ""
+        if rag_chunks:
+            rag_section = "\nRELEVANT ALSATIAN INNOVATIONS:\n"
+            for chunk in rag_chunks[:3]:
+                rag_section += f"\n- {chunk['title']}: {chunk['text'][:200]}\n"
+                
 
         prompt = f"""You are analyzing news articles for relevance to the Alsatian vehicle safety program.
 
 ALSATIAN CONTEXT:
-{ALSATIAN_CONTEXT}
-
+{rag_section}
+RAG_SERVER_URL=http://172.31.16.59:5001
 ARTICLE TO ANALYZE:
 Title: {title}
 Source: {source}
