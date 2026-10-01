@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 google_credentials.json
 *.old
+*.json
+.env

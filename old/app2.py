@@ -230,7 +230,7 @@ CAT_LABELS = {
 
 
 @app.route("/")
-#@require_auth
+@require_auth
 def index():
    
     return render_template_string(
@@ -242,7 +242,7 @@ def index():
 
 
 @app.route("/run")
-#@require_auth
+@require_auth
 def manual_run():
     
     """Manually trigger the pipeline."""
@@ -253,7 +253,7 @@ def manual_run():
 
 
 @app.route("/health")
-#@require_auth
+@require_auth
 def health():
     
     """Health check for AWS load balancer / monitoring."""

@@ -4,13 +4,15 @@ Builds a clean HTML email from scored articles.
 """
 
 import os
-import boto3
 from datetime import datetime
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, To
 from dotenv import load_dotenv
 
 load_dotenv()
 
-FROM_EMAIL = os.getenv("FROM_EMAIL", "chavruta2000@gmail.com")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "chavruta2000@gmail.com")
 TO_EMAIL = os.getenv("DIGEST_TO_EMAIL", "chavruta2000@gmail.com")
 
 # Category display names and colors
@@ -109,29 +111,33 @@ def send_digest(items):
     """
     Send the daily digest email via SendGrid.
     """
+    if not SENDGRID_API_KEY:
+        print("WARNING: SENDGRID_API_KEY not set — skipping email")
+        return False
 
     date_str = datetime.now().strftime("%B %d, %Y")
     subject = f"Alsatian Safety Intelligence — {date_str} ({len(items)} items)"
     html_content = build_html_email(items, date_str)
 
+    message = Mail(
+        from_email=FROM_EMAIL,
+        to_emails=TO_EMAIL,
+        subject=subject,
+        html_content=html_content
+    )
+
     try:
-        ses = boto3.client("ses", region_name="eu-central-1")
-        response = ses.send_email(
-            Source=FROM_EMAIL,
-            Destination={"ToAddresses": [TO_EMAIL]},
-            Message={
-                "Subject": {"Data": subject},
-                "Body": {"Html": {"Data": html_content, "Charset": "UTF-8"}},
-            },
-        )
-        print(f"Email sent: {response['MessageId']}", flush=True)
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        print(f"Email sent: status {response.status_code}")
         return True
     except Exception as e:
         import sys
-        print(f"SES error: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        print(f"SendGrid error: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        body = getattr(e, "body", None)
+        if body:
+            print(f"  response body: {body}", file=sys.stderr, flush=True)
         return False
-
-
 
 if __name__ == "__main__":
     # Test with dummy data

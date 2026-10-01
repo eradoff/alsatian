@@ -65,7 +65,7 @@ if __name__ == "__main__":
         "source": "Test",
         "title": "Test article",
         "url": "https://example.com",
-        "score": 7,
+      #  "score": 7,
         "alsatian_note": "Test note"
     }]
     append_items(test_items)

@@ -14,11 +14,9 @@ Scheduler:
 import os
 import json
 from datetime import datetime
-from functools import wraps
-
 
 #third party
-from flask import Flask, render_template_string, jsonify, redirect, request, Response  
+from flask import Flask, render_template_string, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 
@@ -42,18 +40,8 @@ latest_results = {
     "status": "No run yet"
 }
 
-def require_auth(f):
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        auth = request.authorization
-        if not auth or auth.username != os.getenv("SITE_USER") \
-           or auth.password != os.getenv("SITE_PASS"):
-            return Response("Auth required", 401,
-                            {"WWW-Authenticate": 'Basic realm="Alsatian"'})
-        return f(*args, **kwargs)
-    return wrapped
 
-def run_pipeline(trigger="scheduled"):
+def run_pipeline():
     """
     Full pipeline: fetch → score → email → store results.
     Called by scheduler and manual trigger.
@@ -62,7 +50,6 @@ def run_pipeline(trigger="scheduled"):
     print(f"\n{'='*50}")
     print(f"Pipeline started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*50}")
-  
 
     try:
         # Step 1: Fetch from all sources
@@ -94,8 +81,7 @@ def run_pipeline(trigger="scheduled"):
         latest_results = {
             "items": scored_items,
             "last_run": datetime.now().strftime("%B %d, %Y at %H:%M UTC"),
-            "status": f"OK — {len(scored_items)} relevant items found, email {'sent' if email_sent else 'failed'}",
-            "trigger": ("manual" if trigger == "manual" else "scheduled")
+            "status": f"OK — {len(scored_items)} relevant items found, email {'sent' if email_sent else 'failed'}"
         }
 
         print(f"\nPipeline complete: {len(scored_items)} items, email {'sent' if email_sent else 'failed'}")
@@ -165,7 +151,6 @@ DIGEST_TEMPLATE = """
     <div class="status-bar">
         <strong>Status:</strong> {{ status }}
         &nbsp;&nbsp;
-        &middot; {{ trigger }}
         <a href="/run" class="run-btn">Run Now</a>
     </div>
 
@@ -230,32 +215,30 @@ CAT_LABELS = {
 
 
 @app.route("/")
-#@require_auth
 def index():
-   
     return render_template_string(
         DIGEST_TEMPLATE,
-        **latest_results,
+        items=latest_results["items"],
+        last_run=latest_results["last_run"],
+        status=latest_results["status"],
         cat_colors=CAT_COLORS,
         cat_labels=CAT_LABELS,
     )
 
 
 @app.route("/run")
-#@require_auth
 def manual_run():
-    
     """Manually trigger the pipeline."""
-      
-    run_pipeline(trigger="manual")
-    
-    return redirect("/")
+    run_pipeline()
+    return jsonify({
+        "status": "ok",
+        "items_found": len(latest_results["items"]),
+        "last_run": latest_results["last_run"]
+    })
 
 
 @app.route("/health")
-#@require_auth
 def health():
-    
     """Health check for AWS load balancer / monitoring."""
     return jsonify({
         "status": "healthy",

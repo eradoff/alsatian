@@ -1,0 +1,105 @@
+    1  python3 --version
+    2  pip --version
+    3  pip3 --version
+    4  sudo yum install -y python3-pip
+    5  pip3 --version
+    6  ls
+    7  pwd
+    8  ls
+    9  nano setup.sh
+   10  chmod +x setup.sh 
+   11  ./setup.sh 
+   12  ls
+   13  ls -l
+   14  cat setup.sh 
+   15  ls
+   16  cd alsatian-news-agent/
+   17  source venv/bin/activate
+   18  pwd
+   19  ls
+   20  nano requirements.txt
+   21   pip install -r requirements.txt 
+   22  cd venv/bin/
+   23  python3 -m pip install --upgrade pip
+   24  cd -
+   25   pip install -r requirements.txt 
+   26  ls
+   27  nano .env
+   28  cat .env
+   29  chmod 600 .env
+   30  ls -l
+   31  ls -la
+   32  nano .gitignore
+   33  ls -la
+   34  ls -a
+   35  python fetcher.py 
+   36  cat fetcher.py 
+   37  exit
+   38  history
+   39  exit
+   40  pwd
+   41  ;s
+   42  ;ls
+   43  ls
+   44  cd alsatian-news-agent/
+   45  ls
+   46  ls -a
+   47  nano .env
+   48  ls
+   49  python fetcher.py 
+   50  python3 fetcher.py 
+   51  nano fetcher.py 
+   52  ls
+   53  python3 app.py 
+   54  cd venv
+   55  ls
+   56  cd bin
+   57  ls
+   58  history
+   59  ls
+   60  source activate
+   61  cd ../..
+   62  ls
+   63  python3 fetcher.py 
+   64  ls
+   65  python3 app.py
+   66  ls
+   67  python3 emailer.py 
+   68  python3 scorer.py 
+   69  python3 fetcher.py 2>&1 | head -50
+   70  curl -I https://www.nhtsa.gov/rss/recalls.xml
+   71  nano fetcher.py 
+   72  nano ~/.nanorc
+   73  nano fetcher.py 
+   74  python3 fetcher.py 
+   75  curl -I https://www.nhtsa.gov/rss/recalls.xml
+   76  python3 fetcher.py 2>&1 | head -50
+   77  ls
+   78  mv fetcher.py fetcher.py.old
+   79  cp fetcher.py.old fetcher.py
+   80  nano fetcher.py
+   81  python3 fetcher.py 2>&1 | head -50
+   82  nano fetcher.py
+   83  python3 fetcher.py 2>&1 | head -50
+   84  grep -n "def fetch" fetcher.py
+   85  nano fetcher.py
+   86  grep -n "fetch_all" fetcher.py -A 10
+   87  sed -i 's/    nhtsa_items = fetch_nhtsa_items()/    nhtsa_items = fetch_nhtsa_recalls()\n    ntsb_items = fetch_ntsb_rss()/' fetcher.py
+   88  sed -i 's/    all_items = articles + nhtsa_items/    all_items = articles + nhtsa_items + ntsb_items/' fetcher.py
+   89  python3 fetcher.py 
+   90  curl "https://api.nhtsa.gov/recalls/recallsByVehicle?make=Ford&model=&modelYear=2024"
+   91  curl "https://api.nhtsa.gov/recalls/recallsByVehicle?make=Ford&modelYear=2024&model=F-150"
+   92  curl "https://api.nhtsa.gov/recalls/recallsByVehicle?make=Ford&modelYear=2024&model=F-150" | python3 -m json.tool | head -20
+   93  python3 fetcher.py 
+   94  asdf
+   95  history
+   96  ls
+   97  cat setup.sh 
+   98  ls
+   99  cd alsatian-news-agent/
+  100  ls
+  101  more app.py 
+  102  ls
+  103  ps -ef | grep -i flask
+  104  more requirements.txt 
+  105  history > history.txt
